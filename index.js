@@ -6,6 +6,7 @@ app.use(express.json({strict: false}));
 const cors = require('cors');
 app.use(cors());
 
+app.use(express.static('build'));
 
 
 let notes = [
@@ -87,6 +88,28 @@ app.post('/api/notes', (request, response) => {
 		notes = notes.concat(note);
   	response.json(note);
 })
+
+
+
+app.put('/api/notes/:id', (request, response) => {
+
+		const id = Number(request.params.id);
+ 		const note = notes.find(note => note.id === id);
+		
+		if(!note){
+			return response.status(400).json({ 
+				error: 'note not found' 
+			});
+		}
+
+		const updatednote = { ... note, important : !note.important };
+
+		notes = notes.map(n => n.id === id ? updatednote : n);
+
+  	response.json( notes.find(note => note.id === id));
+})
+
+
 
 
 const PORT  =  process.env.PORT || 3001;
