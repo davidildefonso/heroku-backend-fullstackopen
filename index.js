@@ -1,4 +1,12 @@
 const express = require("express");
+
+require('dotenv').config();
+
+
+const Note = require('./models/note');
+
+
+
 const app = express();
 
 app.use(express.json({strict: false}));
@@ -9,110 +17,132 @@ app.use(cors());
 app.use(express.static('build'));
 
 
-let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2019-05-30T17:30:31.098Z",
-    important: true
-  },
-  {
-    id: 2,
-    content: "Browser can execute only Javascript",
-    date: "2019-05-30T18:39:34.091Z",
-    important: false
-  },
-  {
-    id: 3,
-    content: "GET and POST are the most important methods of HTTP protocol",
-    date: "2019-05-30T19:20:14.298Z",
-    important: true
-  }
-];
 
 
-app.get("/", (request, response ) => {
-		response.send("<h1>Hello world</h1>");
+app.get("/", (request, response, next ) => {
+		try{
+				response.send("<h1>Hello world</h1>");
+		}catch(error){
+			 next(error) ;
+		}
+
+
+
 });
 
-app.get("/api/notes", (request, response) => {
+app.get("/api/notes", (request, response, next) => {
 	
-		response.json(notes);
+		
+		Note.find({}).then(notes => {
+				response.json(notes);
+			
+		}).catch(error => next(error) );
 });
 
-app.get('/api/notes/:id', (request, response) => {
-  const id = request.params.id;
-  const note = notes.find(note => note.id === parseInt(id));
+app.get('/api/notes/:id', (request, response, next) => {
+ 
 
-  if(note){
-			response.json(note);
-	}else{
-			response.status(404).end("Note not found");
-	}
-
-});
+	Note.findById(request.params.id).then(note => {
+    response.json(note)
+  }).catch(error => next(error) );
 
 
-app.delete('/api/notes/:id', (request, response) => {
-  const id = Number(request.params.id);
-  notes = notes.filter(note => note.id !== id);
-	response.status(204).end();
 });
 
 
-const generateId = () => {
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => n.id))
-    : 0
-  return maxId + 1
-}
+app.delete('/api/notes/:id', (request, response, next) => {
+
+		Note.findById(request.params.id)
+			.then(note => {
+						if(!note){
+								return response.status(400).json({ 
+									error: 'note not found' 
+								});
+						}				
+
+						Note.findByIdAndRemove(request.params.id , function (err, note) {
+							if (err) return console.log(err);
+							response.status(204).end();
+						});
+
+			}).catch(error => next(error) );
+	
 
 
 
-app.post('/api/notes', (request, response) => {
+
+});
+
+
+
+
+app.post('/api/notes', (request, response, next) => {
 		const body = request.body;
 
-		if (!body.content) {
-			return response.status(400).json({ 
-				error: 'content missing' 
-			});
-		}
 
-		const note = {
+		const newNoteContent = {
 			content: body.content,
 			important: body.important || false,
-			date: new Date(),
-			id: generateId(),
-		}
+			date: new Date()
+		};
 
-		notes = notes.concat(note);
-  	response.json(note);
+		const note = new Note(newNoteContent);
+
+		note.save().then(savedNote => {
+			response.json(savedNote)
+		}).catch(error => next(error) );
+
 })
 
 
 
-app.put('/api/notes/:id', (request, response) => {
-
-		const id = Number(request.params.id);
- 		const note = notes.find(note => note.id === id);
-		
-		if(!note){
-			return response.status(400).json({ 
-				error: 'note not found' 
-			});
-		}
-
-		const updatednote = { ... note, important : !note.important };
-
-		notes = notes.map(n => n.id === id ? updatednote : n);
-
-  	response.json( notes.find(note => note.id === id));
-})
+app.put('/api/notes/:id', (request, response, next) => {
 
 
 
+		Note.findById(request.params.id)
+			.then(note => {
+						if(!note){
+								return response.status(400).json({ 
+									error: 'note not found' 
+								});
+						}				
 
-const PORT  =  process.env.PORT || 3001;
+						const important = !note.important ;
+			
+						Note.findByIdAndUpdate(
+								request.params.id,
+								{ $set:	{	"important": important} },
+								{new: true},
+								function (err, note) {
+									if (err) return console.log(err);
+									response.json(note)
+						})
+
+			}).catch(error => next(error) );
+			
+
+});
+
+
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    	return response.status(400).send({ error: 'malformatted id' })
+  } else if(error.name === 'ValidationError'){
+			return response.status(400).json({ error: error.message })
+	}
+
+  next(error);
+}
+
+app.use(errorHandler);
+
+
+
+const PORT  =  process.env.PORT;
 
 app.listen(PORT, () => {
 		console.log(`Server running on port ${PORT}`);
