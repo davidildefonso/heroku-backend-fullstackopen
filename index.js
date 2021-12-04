@@ -1,4 +1,4 @@
-const express = require("express");
+const express = require('express');
 
 require('dotenv').config();
 
@@ -19,32 +19,31 @@ app.use(express.static('build'));
 
 
 
-app.get("/", (request, response, next ) => {
-		try{
-				response.send("<h1>Hello world</h1>");
-		}catch(error){
-			 next(error) ;
-		}
+app.get('/', (request, response, next ) => {
+	try{
+		response.send('<h1>Hello world</h1>');
+	}catch(error){
+		next(error) ;
+	}
 
 
 
 });
 
-app.get("/api/notes", (request, response, next) => {
-	
+app.get('/api/notes', (request, response, next) => {	
 		
-		Note.find({}).then(notes => {
-				response.json(notes);
-			
-		}).catch(error => next(error) );
+	Note.find({}).then(notes => {
+		response.json(notes);
+		
+	}).catch(error => next(error) );
 });
 
 app.get('/api/notes/:id', (request, response, next) => {
  
 
 	Note.findById(request.params.id).then(note => {
-    response.json(note)
-  }).catch(error => next(error) );
+		response.json(note);
+	}).catch(error => next(error) );
 
 
 });
@@ -52,21 +51,21 @@ app.get('/api/notes/:id', (request, response, next) => {
 
 app.delete('/api/notes/:id', (request, response, next) => {
 
-		Note.findById(request.params.id)
-			.then(note => {
-						if(!note){
-								return response.status(400).json({ 
-									error: 'note not found' 
-								});
-						}				
+	Note.findById(request.params.id)
+		.then(note => {
+			if(!note){
+				return response.status(400).json({ 
+					error: 'note not found' 
+				});
+			}				
 
-						Note.findByIdAndRemove(request.params.id , function (err, note) {
-							if (err) return console.log(err);
-							response.status(204).end();
-						});
+			Note.findByIdAndRemove(request.params.id , function (err) {
+				if (err) return console.log(err);
+				response.status(204).end();
+			});
 
-			}).catch(error => next(error) );
-	
+		}).catch(error => next(error) );
+
 
 
 
@@ -77,22 +76,22 @@ app.delete('/api/notes/:id', (request, response, next) => {
 
 
 app.post('/api/notes', (request, response, next) => {
-		const body = request.body;
+	const body = request.body;
 
 
-		const newNoteContent = {
-			content: body.content,
-			important: body.important || false,
-			date: new Date()
-		};
+	const newNoteContent = {
+		content: body.content,
+		important: body.important || false,
+		date: new Date()
+	};
 
-		const note = new Note(newNoteContent);
+	const note = new Note(newNoteContent);
 
-		note.save().then(savedNote => {
-			response.json(savedNote)
-		}).catch(error => next(error) );
+	note.save().then(savedNote => {
+		response.json(savedNote);
+	}).catch(error => next(error) );
 
-})
+});
 
 
 
@@ -100,26 +99,26 @@ app.put('/api/notes/:id', (request, response, next) => {
 
 
 
-		Note.findById(request.params.id)
-			.then(note => {
-						if(!note){
-								return response.status(400).json({ 
-									error: 'note not found' 
-								});
-						}				
+	Note.findById(request.params.id)
+		.then(note => {
+			if(!note){
+				return response.status(400).json({ 
+					error: 'note not found' 
+				});
+			}				
 
-						const important = !note.important ;
-			
-						Note.findByIdAndUpdate(
-								request.params.id,
-								{ $set:	{	"important": important} },
-								{new: true},
-								function (err, note) {
-									if (err) return console.log(err);
-									response.json(note)
-						})
+			const important = !note.important ;
 
-			}).catch(error => next(error) );
+			Note.findByIdAndUpdate(
+				request.params.id,
+				{ $set:	{	'important': important} },
+				{new: true},
+				function (err, note) {
+					if (err) return console.log(err);
+					response.json(note);
+				});
+
+		}).catch(error => next(error) );
 			
 
 });
@@ -127,16 +126,15 @@ app.put('/api/notes/:id', (request, response, next) => {
 
 
 const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
 
-  if (error.name === 'CastError') {
-    	return response.status(400).send({ error: 'malformatted id' })
-  } else if(error.name === 'ValidationError'){
-			return response.status(400).json({ error: error.message })
+	if (error.name === 'CastError') {
+		return response.status(400).send({ error: 'malformatted id' });
+	} else if(error.name === 'ValidationError'){
+		return response.status(400).json({ error: error.message });
 	}
 
-  next(error);
-}
+	next(error);
+};
 
 app.use(errorHandler);
 
@@ -145,5 +143,5 @@ app.use(errorHandler);
 const PORT  =  process.env.PORT;
 
 app.listen(PORT, () => {
-		console.log(`Server running on port ${PORT}`);
+	console.log(`Server running on port ${PORT}`);
 });
