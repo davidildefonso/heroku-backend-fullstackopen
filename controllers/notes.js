@@ -3,44 +3,34 @@ const Note = require('../models/note');
 
 
 
-notesRouter.get('/', (request, response, next) => {	
+notesRouter.get('/', (request, response) => {	
 		
 	Note.find({}).then(notes => {
 		response.json(notes);
 		
-	}).catch(error => next(error) );
+	});
 });
 
-notesRouter.get('/:id', async (request, response, next) => {
-	try {
-		const note = await Note.findById(request.params.id);
-		response.json(note);
-	} catch (error) {
-		next(error);
-	}
-
+notesRouter.get('/:id', async (request, response) => {
+	const note = await Note.findById(request.params.id);
+	response.json(note);
 });
 
 
-notesRouter.delete('/:id', async (request, response, next) => {
+notesRouter.delete('/:id', async (request, response) => {
 
-	try {
-		const note = await 	Note.findById(request.params.id);
-		if(!note){
-			return response.status(400).json({ 
-				error: 'note not found' 
-			});
-		}
-
-		
-		Note.findByIdAndRemove(request.params.id , function (err) {
-			if (err) return console.log(err);
-			response.status(204).end();
+	const note = await 	Note.findById(request.params.id);
+	if(!note){
+		return response.status(400).json({ 
+			error: 'note not found' 
 		});
-
-	} catch (error) {
-		next(error);
 	}
+
+	
+	Note.findByIdAndRemove(request.params.id , function (err) {
+		if (err) return console.log(err);
+		response.status(204).end();
+	});
 	
 
 });
@@ -48,7 +38,7 @@ notesRouter.delete('/:id', async (request, response, next) => {
 
 
 
-notesRouter.post('/',  async (request, response, next) => {
+notesRouter.post('/',  async (request, response) => {
 	const body = request.body;
 
 
@@ -60,21 +50,15 @@ notesRouter.post('/',  async (request, response, next) => {
 
 	const note = new Note(newNoteContent);
 
-	try {
-		const savedNote =  await  note.save();
-		response.json(savedNote);
-
-	} catch (error) {
-		next(error);
-	}
-	
+	const savedNote =  await  note.save();
+	response.json(savedNote);
 	
 
 });
 
 
 
-notesRouter.put('/:id', (request, response, next) => {
+notesRouter.put('/:id', (request, response) => {
 
 
 
@@ -97,7 +81,7 @@ notesRouter.put('/:id', (request, response, next) => {
 					response.json(note);
 				});
 
-		}).catch(error => next(error) );
+		});
 			
 
 });
