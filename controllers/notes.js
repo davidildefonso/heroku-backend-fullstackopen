@@ -12,7 +12,14 @@ notesRouter.get('/', (request, response) => {
 });
 
 notesRouter.get('/:id', async (request, response) => {
+
 	const note = await Note.findById(request.params.id);
+	if(!note){
+		return response.status(404).json({ 
+			error: 'note not found' 
+		});
+	}
+
 	response.json(note);
 });
 
@@ -20,6 +27,7 @@ notesRouter.get('/:id', async (request, response) => {
 notesRouter.delete('/:id', async (request, response) => {
 
 	const note = await 	Note.findById(request.params.id);
+
 	if(!note){
 		return response.status(400).json({ 
 			error: 'note not found' 
