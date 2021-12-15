@@ -63,7 +63,7 @@ notesRouter.post('/',  async (request, response) => {
 	
 	const newNoteContent = {
 		content: body.content,
-		important: body.important || false,
+		important:  body.important,
 		date: new Date(),
 		user: user._id
 	};
@@ -74,16 +74,18 @@ notesRouter.post('/',  async (request, response) => {
 
 	if(!user){
 		await user.save();
-		response.json(savedNote);
+		
 	}else{
 		User.findByIdAndUpdate(
 			user._id,
 			{ $set: { notes: user.notes.concat(savedNote._id)}},
 			(err, userUpdated) => {				
-				response.json(userUpdated);
+				console.log(err, userUpdated);
 			}
 		);	
 	}
+
+	response.json(savedNote);
 
 });
 
